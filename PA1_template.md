@@ -1,4 +1,6 @@
 # Reproducible Research: Peer Assessment 1
+Sherman Wood  
+September 11, 2016  
 
 ## Summary
 

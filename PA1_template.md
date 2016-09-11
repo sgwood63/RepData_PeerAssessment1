@@ -1,15 +1,5 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
-```{r setup, message = FALSE, echo=FALSE}
-knitr::opts_chunk$set(message = FALSE)
-library(dplyr)
-library(sqldf)
-library(lattice)
-```
+# Reproducible Research: Peer Assessment 1
+
 ## Summary
 
 We will analyze data from a personal activity monitoring device to determine activity patterns over time.
@@ -28,36 +18,44 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 
 We load the data, controlling the column types (classes). There are some "NA"s in the data, which we will leave for now.
 
-```{r load}
+
+```r
 unzip("activity.zip")
 activity <- read.csv("activity.csv", colClasses=c("integer","Date", "integer"), na.strings = c("NA"))
 ```
 
 Let's have a look at the data.
 
-```{r daily steps}
+
+```r
 byDate <- summarize(group_by(activity, date), steps=sum(steps))
 hist(byDate$steps, breaks = 30, main = "Frequency of Total Steps Per Day",
      xlab="Total Steps per day", ylab = "Number of Days")
+```
 
+![](PA1_template_files/figure-html/daily steps-1.png)<!-- -->
+
+```r
 dates <- group_by(byDate, date)
 
 plot(byDate$date, byDate$steps, type = "l", main = "Steps per Day over time", 
      xlab = "Date", ylab = "Steps per Day", xaxt = "n")
 
 axis.Date(1, at=dates[seq(1, nrow(dates), 6),]$date, format = "%m-%d")
-
 ```
+
+![](PA1_template_files/figure-html/daily steps-2.png)<!-- -->
 
 ## What is mean total number of steps taken per day?
 
-The mean number of steps per day by the person was  : `r format(round(mean(byDate$steps, na.rm = TRUE), 4), scientific = FALSE, digits=6)`.
+The mean number of steps per day by the person was  : 10766.2.
 
-The median number of steps per day by the person was: `r format(round(median(byDate$steps, na.rm = TRUE), 4), scientific = FALSE, digits=6)`.
+The median number of steps per day by the person was: 10765.
 
 ## What is the average daily activity pattern?
 
-```{r activity pattern}
+
+```r
 byInterval <- summarize(group_by(activity, interval), meanSteps=mean(steps, na.rm = TRUE))
 
 # integer as hhmm
@@ -73,15 +71,18 @@ plot(byInterval$interval, byInterval$meanSteps, type = "l", main = "Average numb
 axis(1, at=seq(0, 2400, 300), labels=displayTime(seq(0, 2400, 300)) )
 ```
 
-The time of day when the person took the most steps on average was: `r displayTime(filter(byInterval, meanSteps == max(byInterval$meanSteps))[[1]])`.
+![](PA1_template_files/figure-html/activity pattern-1.png)<!-- -->
+
+The time of day when the person took the most steps on average was: 08:35.
 
 ## Imputing missing values
 
-There are `r nrow(filter(activity, is.na(steps)))` NAs in the original data, which is `r format(nrow(filter(activity, is.na(steps))) * 100 /nrow(activity), scientific = FALSE, digits=4)`% of the base data set. 
+There are 2304 NAs in the original data, which is 13.11% of the base data set. 
 
 For cleaner results, we will impute missing step values by replacing NAs with the mean number of steps in the corresponding 5 min interval of the row.
 
-```{r impute activity}
+
+```r
 imputedActivity <- sqldf("SELECT case 
                           when activity.steps is null 
                               then round(byInterval.meanSteps)
@@ -99,15 +100,18 @@ hist(imputedByDate$steps, breaks = 30, main = "Frequency of Total Steps Per Day:
      xlab="Total Steps per day", ylab = "Number of Days")
 ```
 
+![](PA1_template_files/figure-html/impute activity-1.png)<!-- -->
+
 After imputing the missing values:
 
-- The mean number of steps per day by the person was  : `r format(round(mean(imputedByDate$steps),4), scientific = FALSE)`.
-- The median number of steps per day by the person was: `r format(round(median(imputedByDate$steps), 4), scientific = FALSE)`.
+- The mean number of steps per day by the person was  : 10765.64.
+- The median number of steps per day by the person was: 10762.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 Let's compare the person's activity between weekdays and weekends.
-```{r day type, fig.width=10}
+
+```r
 dayType <- function(x) {
     day <- weekdays(x, abbreviate = TRUE)
     sapply(day, function(d) 
@@ -132,6 +136,8 @@ xyplot(meanSteps ~ interval | dayType, data = imputedByInterval, type = "l", mai
      )
 )
 ```
+
+![](PA1_template_files/figure-html/day type-1.png)<!-- -->
 
 This person is more active on the weekend.
 
